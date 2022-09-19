@@ -12,6 +12,10 @@ public:
   float run(const float sp, const float pv) {
     float u;
     float e = sp - pv;
+//    Serial.print("PID SP:" );
+//    Serial.print(sp);
+//    Serial.print(" PV:");
+//    Serial.println(pv);
     float t = micros() * 1.0e-6;
     float dt = t - t_prev;
     // Calculate pid output
@@ -32,9 +36,9 @@ public:
   // Will also limit integrator to mitigate windup
   void set_output_bounds(const float lower, const float upper) {
     if (lower == 0 and upper == 0){
-      output_bounds = true;
-    }else{
       output_bounds = false;
+    }else{
+      output_bounds = true;
       out_min_ = lower;
       out_max_ = upper;
     }
