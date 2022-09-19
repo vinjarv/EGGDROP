@@ -28,7 +28,7 @@
 
 
 volatile long posi = 0;  // position variable. https://www.arduino.cc/reference/en/language/variables/variable-scope-qualifiers/volatile/
-const float PULSES_TO_MM = TWO_PI * 4.0 / 512.0; // 4mm shaft radius, 512 pulses (encoder in 512 ppr mode, max 2048)
+const float PULSES_TO_MM = TWO_PI * (4.0+0.4) / 512.0; // 4mm shaft radius, 512 pulses (encoder in 512 ppr mode, max 2048)
 int state = 0;
 
 unsigned long millis_prev;
@@ -38,7 +38,8 @@ unsigned long data_iter;
 
 // Objects
 // -3 -1 -0.1 works
-PID pid{-21, 0, -0.1};
+// -21 0 -0.1 ok
+PID pid{-30, -0, 1}; 
 
 float smoothstep(float edge0, float edge1, float x)
 {
@@ -51,24 +52,25 @@ float smoothstep(float edge0, float edge1, float x)
 }
 
 // Returns pos (mm) from a continous curve to maximize speed
+// -0.9g down, 3g up, bottom 5mm, v_bottom -75mm works
 float getPosFromCurve(float t){
 
   // Starting position, accelerating down
-  float a0 = -1*9.81e3;
+  float a0 = -1.35*9.81e3;
   float v0 = 0;
-  float s0 = 210;
+  float s0 = 205;
 
   // Drop finished, accelerating up
-  float t1 = 0.10613672062691369885488522297972;
-  float a1 = 1*9.81e3;
+  float t1 = 0.18423977861673067071868744681262;
+  float a1 = 10*9.81e3;
   float v1 = v0 + a0*t1;
   float s1 = s0 + v0*t1 + 0.5*a0*t1*t1;
 
   // Braking done, lower at constant vel.
-  float t2 = 0.095943040708463138202489708198879;
-  float s2 = s1 + v1*(t-t1) + 0.5*a1*(t-t1)*(t-t1);
+  float t2 = 0.023343318125491056449163478102578;
+  float s2 = s1 + v1*t2 + 0.5*a1*t2*t2;
 
-  float v3 = -100;
+  float v3 = -0.150;
   
   if (t < 0)
     t = 0;
@@ -78,7 +80,7 @@ float getPosFromCurve(float t){
   {
     return s0 + v0*t + 0.5*a0*t*t;
   }
-  else if (t1 <= t < t1+t2)
+  else if (t1 <= t and t < (t1+t2))
   {
     return s1 + v1*(t-t1) + 0.5*a1*(t-t1)*(t-t1);
   }
@@ -154,8 +156,9 @@ void main_drop(const long& pos) {
   const float v_up = 150;
   const float a_drop = 10.5e3;
   const float v_down = 80;
-  const float pos_top = 210;
+  const float pos_top = 205;
   const float pos_treshold = 40;
+  const float pos_bottom = -0.005;
   
   switch (state) {
 
@@ -175,7 +178,7 @@ void main_drop(const long& pos) {
     case 10:
       {
       float t = (millis()-t0)*1e-3;
-      float s = smoothstep(0, 0.8, t);
+      float s = smoothstep(0, 1.2, t);
       if (s >= 1){
         // Top reached
         Serial.println("Top reached, pos = " + String(pos_mm));
@@ -188,7 +191,6 @@ void main_drop(const long& pos) {
     // Wait for start
     case 20:
       pos_r = pos_top;
-      Serial.println("Wait");
       if (Serial.available() > 0){
         Serial.readStringUntil('\n');
         Serial.println("Drop started");
@@ -202,24 +204,18 @@ void main_drop(const long& pos) {
     case 21:
     {
       float t = (millis()-t0)*1e-3;
-      float s = smoothstep(0, 0.4, t);
-      if (s >= 1){
+      float s = getPosFromCurve(t);
+      if (s <= pos_bottom){
         Serial.println("Drop finished");
         Serial.print("Final time: ");
         Serial.println(millis() - t_start);
         Serial.println();
         state = 0;
       }
-      pos_r = pos_top *(1-s);
+      pos_r = s;
+      Serial.println(s);
     }
     break;
-
-    case 22:
-    {
-      
-    }
-    break;
-
   
     // Drop under constant acceleration
     case 30:
