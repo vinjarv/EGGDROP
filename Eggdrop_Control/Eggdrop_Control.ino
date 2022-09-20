@@ -209,11 +209,11 @@ void main_drop(const long& pos) {
         Serial.println("Drop finished");
         Serial.print("Final time: ");
         Serial.println(millis() - t_start);
-        Serial.println();
+        Serial.println("ms");
         state = 0;
       }
       pos_r = s;
-      Serial.println(s);
+      //Serial.println(s);
     }
     break;
   
