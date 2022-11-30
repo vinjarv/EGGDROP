@@ -10,7 +10,7 @@ a0 = -1.35*9.81;
 a1 = 10*9.81;
 
 % End cond.
-s2 = -0.050;
+s2 = 0.005;
 v2 = -0.150;
 
 % Equations of motion
@@ -32,7 +32,7 @@ t_tot = t1 + t2
 v1 = v0 + a0*t1
 v2 = v1 + a1*t2
 
-t = linspace(0, t_tot+0.5, 100);
+t = linspace(0, t_tot+abs(s2/v2 * 1.1), 100);
 y = zeros(100,1);
 for i = 1:length(t)
     y(i) = 0;
@@ -45,5 +45,13 @@ for i = 1:length(t)
     end
 end
 
-figure(2)
 plot(t, y)
+grid()
+title("Eggdrop motion profile")
+xlabel("Time (s)")
+ylabel("Height (m)")
+gnd = refline(0, 0);
+gnd.Color = "k";
+tl0 = xline(0, "-", "Freefall");
+tl1 = xline(double(t1), "-", "Braking");
+tl2 = xline(double(t1+t2), "-", "Constant vel.");
