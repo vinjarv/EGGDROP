@@ -11,7 +11,7 @@
 
 #define ENCA 2  //Encoder pinA
 #define ENCB 3  //Encoder pinB
-#define ENCX 4  //Encoder pinX
+#define ENCX 8  //Encoder pinX
 #define PWM 5   //Motor PWM pin
 #define DIR2 6  //Motor controller pin2
 #define DIR1 7  //Motor controller pin1
@@ -213,7 +213,7 @@ void main_drop(const long& pos) {
         state = 0;
       }
       pos_r = s;
-      //Serial.println(s);
+      Serial.println(s);
     }
     break;
   
